@@ -1,16 +1,19 @@
 import 'package:chat/models/account.dart';
+import 'package:chat/models/lawyer.dart';
+import 'package:chat/screens/about.dart';
 import 'package:chat/screens/browse.dart';
 import 'package:chat/screens/messagesScreen.dart';
 import 'package:chat/screens/notification.dart';
 import 'package:chat/screens/profile.dart';
 import 'package:chat/screens/request.dart';
-import 'package:chat/screens/wallet.dart';
+import 'package:chat/widgets/lawyer_card.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:get/get.dart';
-import '../widgets/lawyer_card.dart';
 import '../widgets/category.dart';
+import 'disclaimerPage.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.account});
@@ -20,41 +23,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isSideBarOpen = false;
-  int _selectedIndex = 4;
+  final int _selectedIndex = 3;
   TextEditingController searchController = TextEditingController();
-  @override
-  void initState() {
-    super.initState();
-  }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
+    if (index == _selectedIndex) return;
 
-      switch (_selectedIndex) {
-        case 0:
-          Get.off(NotificationsScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 1:
-          Get.off(WalletScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 2:
-          Get.off(MessagesScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 3:
-          Get.off(RequestsScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 4:
-          Get.off(HomeScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-      }
-    });
+    Widget nextScreen;
+    switch (index) {
+      case 0:
+        nextScreen = NotificationsScreen(account: widget.account);
+        break;
+      case 1:
+        nextScreen = MessagesScreen(account: widget.account);
+        break;
+      case 2:
+        nextScreen = RequestsScreen(account: widget.account);
+        break;
+      case 3:
+        return; // Prevent infinite navigation loop
+      default:
+        return;
+    }
+
+    Get.offAll(() => nextScreen, transition: Transition.noTransition);
   }
 
   @override
@@ -65,7 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            DrawerHeader(child: Icon(Icons.scale_rounded)),
+            DrawerHeader(
+              child: Image.asset(
+                height: 150,
+                width: 150,
+                "assets/images/ehkaam-seeklogo.png",
+                fit: BoxFit.contain,
+              ),
+            ),
             Text("Menu",
                 style: GoogleFonts.lato(
                   textStyle: TextStyle(
@@ -74,6 +73,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )),
             SizedBox(height: 20),
+            ListTile(
+              leading: Icon(
+                Icons.info_outline,
+                color: Color.fromARGB(255, 72, 47, 0),
+              ),
+              title: Text("Disclaimer",
+                  style: GoogleFonts.lato(
+                    textStyle: TextStyle(
+                      fontSize: 17,
+                      color: Color.fromARGB(255, 72, 47, 0),
+                    ),
+                  )),
+              onTap: () => Get.to(DisclaimerPage()),
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.info,
+                color: Color.fromARGB(255, 72, 47, 0),
+              ),
+              title: Text("About",
+                  style: GoogleFonts.lato(
+                    textStyle: TextStyle(
+                      fontSize: 17,
+                      color: Color.fromARGB(255, 72, 47, 0),
+                    ),
+                  )),
+              onTap: () => Get.to(AboutPage()),
+            ),
             ListTile(
               leading: Icon(
                 Icons.person,
@@ -127,81 +154,138 @@ class _HomeScreenState extends State<HomeScreen> {
                 )),
           ],
         ),
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Color.fromARGB(255, 72, 47, 0),
-                          blurRadius: 5,
-                          spreadRadius: 1)
-                    ],
-                  ),
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: "Search",
-                      prefixIcon: IconButton(
-                        icon: Icon(Icons.search),
-                        onPressed: () {
-                          Get.to(BrowseLawyersScreen(''),
-                              transition: Transition.noTransition);
-                        },
-                        color: Color.fromARGB(255, 72, 47, 0),
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text("Categories",
-                    style: GoogleFonts.lato(
-                      textStyle: TextStyle(
-                        fontSize: 30,
-                        color: Color.fromARGB(255, 72, 47, 0),
-                      ),
-                    )),
-                SizedBox(height: 10),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.3,
-                  ),
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    return CategoryCard(category: categories[index]);
-                  },
-                ),
-                SizedBox(height: 20),
-                Text("Top Lawyers",
-                    style: GoogleFonts.lato(
-                      textStyle: TextStyle(
-                        fontSize: 30,
-                        color: Color.fromARGB(255, 72, 47, 0),
-                      ),
-                    )),
-                SizedBox(height: 10),
-                Column(
-                    //  children: lawyers.map((e) => LawyerCard(lawyer: e)).toList(),
-                    ),
-              ],
-            ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.info_outline),
+            onPressed: () {
+              Get.to(DisclaimerPage(), transition: Transition.rightToLeft);
+            },
           ),
         ],
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Get.to(
+                      () => BrowseLawyersScreen(''),
+                      transition: Transition.downToUp,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutQuart,
+                    );
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 65),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Color.fromARGB(255, 255, 194, 38),
+                            Color.fromARGB(255, 220, 158, 0),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          stops: [0.0, 0.8],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_rounded,
+                              color: Colors.white, size: 22),
+                          const SizedBox(width: 12),
+                          Text(
+                            "Browse Lawyers",
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+            SizedBox(height: 20),
+            Text("Categories",
+                style: GoogleFonts.lato(
+                  textStyle: TextStyle(
+                    fontSize: 30,
+                    color: Color.fromARGB(255, 72, 47, 0),
+                  ),
+                )),
+            SizedBox(height: 10),
+            SizedBox(
+              height: 200,
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.3,
+                ),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  return CategoryCard(category: categories[index]);
+                },
+              ),
+            ),
+            SizedBox(height: 5),
+            Text("Top Lawyers",
+                style: GoogleFonts.lato(
+                  textStyle: TextStyle(
+                    fontSize: 30,
+                    color: Color.fromARGB(255, 72, 47, 0),
+                  ),
+                )),
+            SizedBox(height: 10),
+            FutureBuilder<List<Lawyer>>(
+              future: Lawyer.getTopLawyers(limit: 1),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                      child: CircularProgressIndicator()); // Loading spinner
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error loading lawyers"));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text("No top-rated lawyers available"));
+                }
+
+                List<Lawyer> topLawyers = snapshot.data!;
+                return Column(
+                  children: topLawyers.map((lawyer) {
+                    return LawyerCard(lawyer: lawyer);
+                  }).toList(),
+                );
+              },
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -211,13 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.grey,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(LucideIcons.bell),
-            label: "Notifications",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(LucideIcons.wallet),
-            label: "Wallet",
-          ),
+              icon: Icon(LucideIcons.bell), label: "Notifications"),
           BottomNavigationBarItem(
               icon: Icon(LucideIcons.messageCircle), label: "Chat"),
           BottomNavigationBarItem(

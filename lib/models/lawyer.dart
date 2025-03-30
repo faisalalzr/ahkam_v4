@@ -19,21 +19,23 @@ class Lawyer extends Account {
   @override
   bool? isLawyer;
   final String? desc;
+  final String? fees;
 
-  Lawyer(
-      {this.uid,
-      this.name,
-      required this.email,
-      this.specialization,
-      this.rating,
-      this.province,
-      this.number,
-      this.licenseNO,
-      this.exp,
-      this.pic,
-      this.isLawyer,
-      this.desc})
-      : super(email: email);
+  Lawyer({
+    this.uid,
+    this.name,
+    required this.email,
+    this.specialization,
+    this.rating,
+    this.province,
+    this.number,
+    this.licenseNO,
+    this.exp,
+    this.pic,
+    this.isLawyer,
+    this.desc,
+    this.fees,
+  }) : super(email: email);
 
   @override
   Map<String, dynamic> toMap() {
@@ -49,57 +51,46 @@ class Lawyer extends Account {
       'exp': exp,
       'pic': pic,
       'isLawyer': isLawyer,
-      'desc': desc
+      'desc': desc,
+      'fees': fees,
     };
   }
 
-  factory Lawyer.fromMap(Map<String, dynamic> map) {
+  factory Lawyer.fromFirestore(DocumentSnapshot doc) {
+    final map = doc.data() as Map<String, dynamic>;
     return Lawyer(
-        uid: map['uid'],
-        name: map['name'],
-        email: map['email'],
-        specialization: map['specialization'],
-        rating: (map['rating'] as num?)?.toDouble(),
-        province: map['province'],
-        number: map['number'],
-        licenseNO: map['licenceNO'],
-        exp: map['exp'],
-        pic: map['pic'],
-        isLawyer: map['isLawyer'],
-        desc: map['desc']);
+      uid: doc.id, // Use Firestore document ID
+      name: map['name'] ?? 'Unknown',
+      email: map['email'] ?? '',
+      specialization: map['specialization'],
+      rating: (map['rating'] as num?)?.toDouble() ?? 0.0, // Default 0.0 if null
+      province: map['province'],
+      number: map['number'],
+      licenseNO: map['licenseNO'],
+      exp: map['exp'] ?? 0,
+      pic: map['pic'],
+      isLawyer: map['isLawyer'] ?? false,
+      desc: map['desc'],
+      fees: map['fees'],
+    );
   }
 
-// Firestore collection reference
   static final CollectionReference lawyerCollection =
       FirebaseFirestore.instance.collection('account');
 
-  // Add a lawyer to Firestore
   @override
   Future<void> addToFirestore() async {
     await lawyerCollection.add(toMap());
   }
 
-  // Fetch all lawyers from Firestore
-  static Future<List<Lawyer>> getLawyers() async {
-    QuerySnapshot querySnapshot = await lawyerCollection.get();
-    return querySnapshot.docs
-        .map((doc) => Lawyer.fromMap(doc.data() as Map<String, dynamic>))
-        .toList();
-  }
+  /// **Fetch Top-Rated Lawyers**
+  static Future<List<Lawyer>> getTopLawyers({int limit = 1}) async {
+    QuerySnapshot querySnapshot = await lawyerCollection
+        .where('isLawyer', isEqualTo: true)
+        //.orderBy('rating', descending: true)
+        .limit(limit)
+        .get();
 
-  // Update a lawyer's details in Firestore
-  @override
-  Future<void> updateInFirestore() async {
-    if (uid != null) {
-      await lawyerCollection.doc(uid).update(toMap());
-    }
-  }
-
-  // Delete a lawyer from Firestore
-  @override
-  Future<void> deleteFromFirestore() async {
-    if (uid != null) {
-      await lawyerCollection.doc(uid).delete();
-    }
+    return querySnapshot.docs.map((doc) => Lawyer.fromFirestore(doc)).toList();
   }
 }

@@ -12,8 +12,7 @@ class UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.to(
-          ChatScreen(receiverEmail: receiverEmail, receiverID: receiverID)),
+      onTap: () => Get.to(ChatScreen(receiverID: receiverID)),
       child: Container(
         decoration: BoxDecoration(
             color: Theme.of(context).canvasColor,

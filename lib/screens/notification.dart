@@ -2,7 +2,6 @@ import 'package:chat/models/account.dart';
 import 'package:chat/screens/home.dart';
 import 'package:chat/screens/messagesScreen.dart';
 import 'package:chat/screens/request.dart';
-import 'package:chat/screens/wallet.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,34 +15,31 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  var _selectedIndex = 0;
+  final _selectedIndex = 0;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      switch (_selectedIndex) {
-        case 0:
-          Get.to(NotificationsScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 1:
-          Get.to(WalletScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 2:
-          Get.to(MessagesScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 3:
-          Get.to(RequestsScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-        case 4:
-          Get.to(HomeScreen(account: widget.account),
-              transition: Transition.noTransition);
-          break;
-      }
-    });
+    if (index == _selectedIndex) return;
+
+    Widget nextScreen;
+    switch (index) {
+      case 0:
+        nextScreen = NotificationsScreen(account: widget.account);
+        break;
+
+      case 1:
+        nextScreen = MessagesScreen(account: widget.account);
+        break;
+      case 2:
+        nextScreen = RequestsScreen(account: widget.account);
+        break;
+      case 3:
+        nextScreen = HomeScreen(account: widget.account);
+
+      default:
+        return;
+    }
+
+    Get.offAll(() => nextScreen, transition: Transition.noTransition);
   }
 
   @override
@@ -91,14 +87,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
               icon: Icon(LucideIcons.bell), label: "notifications"),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.wallet), label: "wallet"),
           BottomNavigationBarItem(
               icon: Icon(LucideIcons.messageCircle), label: "Chat"),
           BottomNavigationBarItem(

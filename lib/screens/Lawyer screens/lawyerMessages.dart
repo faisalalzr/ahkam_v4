@@ -2,7 +2,7 @@ import 'package:chat/models/lawyer.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerHomeScreen.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerNotiScreen.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerWalletScreen.dart';
-import 'package:chat/screens/chat.dart';
+import 'package:chat/screens/Lawyer%20screens/lawyerchat.dart';
 
 import 'package:chat/services/auth_service.dart';
 import 'package:chat/services/chat_service.dart';
@@ -184,7 +184,7 @@ class _LawyermessagesScreenState extends State<Lawyermessages> {
             //   color: Color(0xFFF5EEDC),
             // ),
             onTap: () {
-              Get.to(() => ChatScreen(
+              Get.to(() => Lawyerchat(
                     receiverEmail: userData["email"] ?? 'email',
                     receiverID: userData["uid"] ?? 'uid',
                   ));

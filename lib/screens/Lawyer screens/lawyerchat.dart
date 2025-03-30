@@ -5,11 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
-class ChatScreen extends StatefulWidget {
+class Lawyerchat extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
 
-  const ChatScreen({
+  const Lawyerchat({
     super.key,
     required this.receiverEmail,
     required this.receiverID,
@@ -19,7 +19,7 @@ class ChatScreen extends StatefulWidget {
   _ChatScreenState createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<Lawyerchat> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
   final TextEditingController _messageController = TextEditingController();

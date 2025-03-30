@@ -1,9 +1,8 @@
 import 'package:chat/models/account.dart';
-import 'package:chat/screens/chat.dart';
 import 'package:chat/screens/home.dart';
 import 'package:chat/screens/messagesScreen.dart';
 import 'package:chat/screens/notification.dart';
-import 'package:chat/screens/wallet.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,7 +19,7 @@ class RequestsScreen extends StatefulWidget {
 
 class _RequestsScreenState extends State<RequestsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final int _selectedIndex = 3; // Default tab index
+  final int _selectedIndex = 2; // Default tab index
 
   // Stream that listens to requests related to the user
   Stream<List<Map<String, dynamic>>> fetchLawyerRequests() {
@@ -29,9 +28,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
         .where('userId', isEqualTo: widget.account.uid) // Filter requests
         .snapshots()
         .map((querySnapshot) {
-      return querySnapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
+      return querySnapshot.docs.map((doc) => doc.data()).toList();
     });
   }
 
@@ -44,18 +41,18 @@ class _RequestsScreenState extends State<RequestsScreen> {
       case 0:
         nextScreen = NotificationsScreen(account: widget.account);
         break;
+
       case 1:
-        nextScreen = WalletScreen(account: widget.account);
-        break;
-      case 2:
         nextScreen = MessagesScreen(account: widget.account);
         break;
-      case 3:
-        return; // Prevent reloading the same screen
-      case 4:
-      default:
-        nextScreen = HomeScreen(account: widget.account);
+      case 2:
+        nextScreen = RequestsScreen(account: widget.account);
         break;
+      case 3:
+        nextScreen = HomeScreen(account: widget.account);
+
+      default:
+        return;
     }
 
     Get.offAll(() => nextScreen, transition: Transition.noTransition);
@@ -98,6 +95,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     final String formattedDate = getFormattedDate(request);
     final String receiverEmail = request['lawyerEmail'] ?? '';
     final String receiverID = request['lawyerId'] ?? '';
+    //  final String fees = request['fees'] ?? '0.0';
 
     return Card(
       elevation: 5,
@@ -121,6 +119,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                         : Colors.red,
               ),
             ),
+            //  Text("$fees")
           ],
         ),
         trailing: status == 'Accepted'
@@ -130,15 +129,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: const [
-                      Text('Start Chat', style: TextStyle(color: Colors.blue)),
+                      Text('Go to chats', style: TextStyle(color: Colors.blue)),
                     ],
                   ),
                 ),
                 onTap: () {
-                  Get.to(() => ChatScreen(
-                        receiverEmail: receiverEmail,
-                        receiverID: receiverID,
-                      ));
+                  Get.to(() => MessagesScreen(account: widget.account),
+                      transition: Transition.noTransition);
                 },
               )
             : null,
@@ -185,14 +182,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(LucideIcons.bell), label: "Notifications"),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.wallet), label: "Wallet"),
           BottomNavigationBarItem(
               icon: Icon(LucideIcons.messageCircle), label: "Chat"),
           BottomNavigationBarItem(

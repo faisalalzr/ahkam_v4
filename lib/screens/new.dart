@@ -29,6 +29,8 @@ class _NewState extends State<New> {
   final TextEditingController _experienceController = TextEditingController();
   final TextEditingController provinceCont = TextEditingController();
   final TextEditingController descController = TextEditingController();
+  final TextEditingController feesController = TextEditingController();
+
   final List<String> professions = [
     "Civil Law",
     "Criminal Law",
@@ -141,6 +143,7 @@ class _NewState extends State<New> {
         _buildInputField("Phone Number", _phoneNumberController,
             keyboardType: TextInputType.phone, validator: (val) {
           if (val!.isEmpty) return 'Please enter a phone number';
+          return null;
         }),
         if (isLawyer) ...[
           const SizedBox(height: 15),
@@ -161,6 +164,12 @@ class _NewState extends State<New> {
           const SizedBox(height: 15),
           _buildInputField("Description", descController, validator: (val) {
             if (val!.isEmpty) return 'Please provide a description';
+            return null;
+          }),
+          const SizedBox(height: 15),
+          _buildInputField("Consultation Fee", feesController,
+              keyboardType: TextInputType.number, validator: (val) {
+            if (val!.isEmpty) return 'Please enter your consultation fee';
             return null;
           }),
           const SizedBox(height: 15),
@@ -226,6 +235,7 @@ class _NewState extends State<New> {
           specialization: _selectedProfession,
           isLawyer: isLawyer,
           desc: descController.text,
+          fees: feesController.text,
         );
         await lawyer.addToFirestore();
         Get.to(LawyerHomeScreen(lawyer: lawyer));

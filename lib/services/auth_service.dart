@@ -5,45 +5,81 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  //sign in
-  Future<UserCredential> signInWithEmailPassword(
-      String email, String pass) async {
+  // Sign In
+  Future<User?> signInWithEmailPassword(String email, String pass) async {
     try {
+      // Sign in the user
       UserCredential userCredential =
           await _auth.signInWithEmailAndPassword(email: email, password: pass);
 
-      //save user info in separate doc
-      _firestore.collection('account').doc(userCredential.user!.uid).set({
-        'uid': userCredential.user!.uid,
-        'email': email,
-      });
-      return userCredential;
+      // Check if the user document exists
+      final userDoc = await _firestore
+          .collection('account')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      // If the user document doesn't exist, create it
+      if (!userDoc.exists) {
+        await _firestore
+            .collection('account')
+            .doc(userCredential.user!.uid)
+            .set(
+                {
+              'uid': userCredential.user!.uid,
+              'email': email,
+            },
+                SetOptions(
+                    merge:
+                        true)); // Use merge to avoid overwriting existing data
+      }
+
+      return userCredential.user; // Return the authenticated user
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.code);
+      throw Exception('Authentication failed: ${e.message}');
     }
   }
 
-// get current user
+  // Get Current User
   User? getCurrentUser() {
     return _auth.currentUser;
   }
 
-  //sign up
-  Future<UserCredential> signUpWithEmailPassword(
-      String email, String password) async {
+  // Sign Up
+  Future<User?> signUpWithEmailPassword(String email, String password) async {
     try {
-      //create user
+      // Create the user with the provided credentials
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      //save user info in separate doc
-      _firestore.collection('account').doc(userCredential.user!.uid).set({
-        'uid': userCredential.user!.uid,
-        'email': email,
-      });
-      return userCredential;
+      // Check if the user document exists
+      final userDoc = await _firestore
+          .collection('account')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      // If the user document doesn't exist, create it
+      if (!userDoc.exists) {
+        await _firestore
+            .collection('account')
+            .doc(userCredential.user!.uid)
+            .set(
+                {
+              'uid': userCredential.user!.uid,
+              'email': email,
+            },
+                SetOptions(
+                    merge:
+                        true)); // Use merge to avoid overwriting existing data
+      }
+
+      return userCredential.user; // Return the created user
     } on FirebaseAuthException catch (e) {
-      throw Exception(e.code);
+      throw Exception('Sign up failed: ${e.message}');
     }
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    await _auth.signOut();
   }
 }

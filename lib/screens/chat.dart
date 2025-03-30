@@ -6,12 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String receiverEmail;
   final String receiverID;
 
   const ChatScreen({
     super.key,
-    required this.receiverEmail,
     required this.receiverID,
   });
 
@@ -77,7 +75,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             SizedBox(width: 10),
             Text(
-              widget.receiverEmail,
+              '',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],

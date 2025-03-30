@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class LawyerCard extends StatelessWidget {
+class LawyerCardBrowse extends StatelessWidget {
   final Lawyer lawyer;
-  const LawyerCard({super.key, required this.lawyer});
+  const LawyerCardBrowse({super.key, required this.lawyer});
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +16,12 @@ class LawyerCard extends StatelessWidget {
             transition: Transition.fade);
       },
       child: Card(
-        elevation: 20,
+        elevation: 10,
         child: Container(
           padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: Color.fromARGB(255, 95, 68, 0),
+            color: Colors.white,
           ),
           child: Row(
             children: [
@@ -43,18 +43,31 @@ class LawyerCard extends StatelessWidget {
                         style: GoogleFonts.lato(
                           textStyle: TextStyle(
                               fontSize: 15,
-                              color: Color.fromARGB(255, 255, 255, 255),
+                              color: Colors.black,
                               fontWeight: FontWeight.bold),
                         )),
+                    SizedBox(height: 4),
+                    lawyer.desc!.length < 25
+                        ? Text(lawyer.desc ?? '',
+                            style: GoogleFonts.lato(
+                              textStyle: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                            ))
+                        : Text('${lawyer.desc!.substring(0, 25)}...' ?? '',
+                            style: GoogleFonts.lato(
+                              textStyle: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                            )),
                     SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.star, color: Colors.orange, size: 18),
-                        Text("${lawyer.rating} (${lawyer.rating} Reviews)",
-                            style: TextStyle(
-                                fontSize: 14,
-                                color:
-                                    const Color.fromARGB(255, 255, 255, 255))),
+                        Text("${lawyer.rating} ",
+                            style: TextStyle(fontSize: 14, color: Colors.grey)),
                       ],
                     ),
                   ],

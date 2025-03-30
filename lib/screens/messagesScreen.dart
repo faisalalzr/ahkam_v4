@@ -3,12 +3,11 @@ import 'package:chat/screens/chat.dart';
 import 'package:chat/screens/home.dart';
 import 'package:chat/screens/notification.dart';
 import 'package:chat/screens/request.dart';
-import 'package:chat/screens/wallet.dart';
 import 'package:chat/services/auth_service.dart';
 import 'package:chat/services/chat_service.dart';
-import 'package:chat/widgets/user_tile.dart';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,32 +22,64 @@ class MessagesScreen extends StatefulWidget {
 
 class _MessagesScreenState extends State<MessagesScreen> {
   final ChatService chatService = ChatService();
-  final AuthService authService = AuthService();
-  int selectedIndex = 2; // Persistent state for bottom nav selection
+  late AuthService authService;
+  User? currentUser;
+  List<String> chatRooms = [];
+  int selectedIndex = 1; // Persistent state for bottom nav selection
+  @override
+  void initState() {
+    super.initState();
+    authService = AuthService();
+    currentUser = authService.getCurrentUser();
+
+    if (currentUser != null) {
+      // Wrap the Firestore call in Future.delayed
+      Future.delayed(Duration.zero, () => fetchChatRoomIds());
+    } else {
+      print("No logged-in user.");
+    }
+  }
+
+  void fetchChatRoomIds() async {
+    try {
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('chat_rooms').get();
+
+      List<String> roomIds = snapshot.docs.map((doc) => doc.id).toList();
+
+      setState(() {
+        chatRooms = roomIds; // Updating state with only IDs
+      });
+
+      debugPrint("Chat Room IDs: $roomIds"); // Print the IDs for debugging
+    } catch (e) {
+      debugPrint("Error fetching chat room IDs: $e");
+    }
+  }
 
   // Handles bottom navigation
   void onItemTapped(int index) {
-    if (selectedIndex == index) return; // Prevent unnecessary rebuilds
-    setState(() => selectedIndex = index);
+    if (index == selectedIndex) return;
 
+    Widget nextScreen;
     switch (index) {
       case 0:
-        Get.off(() => NotificationsScreen(account: widget.account),
-            transition: Transition.noTransition);
+        nextScreen = NotificationsScreen(account: widget.account);
         break;
       case 1:
-        Get.off(() => WalletScreen(account: widget.account),
-            transition: Transition.noTransition);
+        nextScreen = MessagesScreen(account: widget.account);
+        break;
+      case 2:
+        nextScreen = RequestsScreen(account: widget.account);
         break;
       case 3:
-        Get.off(() => RequestsScreen(account: widget.account),
-            transition: Transition.noTransition);
+        nextScreen = HomeScreen(account: widget.account);
         break;
-      case 4:
-        Get.off(() => HomeScreen(account: widget.account),
-            transition: Transition.noTransition);
-        break;
+      default:
+        return;
     }
+
+    Get.offAll(() => nextScreen, transition: Transition.noTransition);
   }
 
   @override
@@ -69,25 +100,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
             )),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Color(0xFFF5EEDC), // Purple color
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: const Color.fromARGB(255, 0, 0, 0)),
-            onPressed: () {}, // Implement search functionality here
-          ),
-        ],
+        backgroundColor: Color(0xFFF5EEDC),
       ),
       body: _buildUserList(),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  // Bottom Navigation Bar styling
+  // Bottom Navigation Bar
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       onTap: onItemTapped,
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Colors.white,
       selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
       unselectedItemColor: Colors.grey,
       type: BottomNavigationBarType.fixed,
@@ -95,10 +120,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.bell),
           label: "Notifications",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(LucideIcons.wallet),
-          label: "Wallet",
         ),
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.messageCircle),
@@ -119,7 +140,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // User list stream
   Widget _buildUserList() {
     return StreamBuilder(
-      stream: chatService.getUserStream(),
+      stream: chatService.getLawyerStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const Center(
@@ -128,7 +149,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyState(); // Custom empty state widget
+          return _buildEmptyState();
         }
 
         return ListView(
@@ -157,46 +178,58 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  // User list item widget
+  bool userHasChatRoom() {
+    return chatRooms.any((roomId) {
+      List<String> participants = roomId.split("_");
+      return participants.contains(currentUser!.uid);
+    });
+  }
+
   Widget _buildUserListItem(
       Map<String, dynamic> userData, BuildContext context) {
-    if (userData["email"] != authService.getCurrentUser()!.email) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Card(
-          elevation: 5,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            title: Text(userData["email"] ?? 'Unknown User',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle:
-                Text("Tap to chat", style: TextStyle(color: Colors.grey[600])),
-            leading: CircleAvatar(
-              backgroundColor: Color.fromARGB(255, 136, 97, 0),
-              child: Text(
-                userData["email"]?.substring(0, 1).toUpperCase() ?? 'U',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-            // trailing: Icon(
-            //   Icons.chat_bubble,
-            //   color: Color(0xFFF5EEDC),
-            // ),
-            onTap: () {
-              Get.to(() => ChatScreen(
-                    receiverEmail: userData["email"] ?? 'email',
-                    receiverID: userData["uid"] ?? 'uid',
-                  ));
-            },
-          ),
+    // Get user's chat rooms
+    bool hasChat = chatRooms.any((roomId) {
+      List<String> participants = roomId.split("_");
+      return participants.contains(currentUser!.uid);
+    });
+
+    if (hasChat) {
+      return Container(
+        child: Text(
+          "No chat rooms found for user",
+          style: TextStyle(color: Colors.black),
         ),
       );
-    } else {
-      return Container();
     }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          title: Text(userData["name"] ?? 'Unknown User',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle:
+              Text("Tap to chat", style: TextStyle(color: Colors.grey[600])),
+          leading: CircleAvatar(
+            backgroundColor: Color.fromARGB(255, 136, 97, 0),
+            child: userData["pic"] ??
+                Text(
+                  userData["name"]?.substring(0, 1).toUpperCase() ?? 'U',
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+          ),
+          onTap: () {
+            Get.to(() => ChatScreen(
+                  receiverID: userData["uid"] ?? '',
+                ));
+          },
+        ),
+      ),
+    );
   }
 }

@@ -28,13 +28,12 @@ class CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Get.to(BrowseLawyersScreen(null));
+        Get.to(BrowseLawyersScreen(''));
       },
       child: Container(
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 246, 236, 206),
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

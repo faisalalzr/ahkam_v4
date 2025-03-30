@@ -14,6 +14,16 @@ class ChatService {
     });
   }
 
+  Stream<List<Map<String, dynamic>>> getLawyerStream() {
+    return _firestore
+        .collection("account")
+        .where('isLawyer', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
   /// Sends a message to the given receiver.
   Future<void> sendMessage(String receiverId, String message) async {
     // Validate that the message is not empty or just whitespace.
@@ -53,7 +63,7 @@ class ChatService {
           .add(newMessage.toMap());
     } catch (e) {
       print('Error sending message: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -69,5 +79,17 @@ class ChatService {
         .collection("messages")
         .orderBy("timestamp", descending: false)
         .snapshots();
+  }
+
+  Future<List<String>> getChatRoomIDs() async {
+    try {
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('chat_rooms').get();
+
+      return snapshot.docs.map((doc) => doc.id).toList();
+    } catch (e) {
+      print("Error fetching chat rooms: $e");
+      return [];
+    }
   }
 }

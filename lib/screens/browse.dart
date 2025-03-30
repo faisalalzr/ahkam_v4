@@ -1,8 +1,8 @@
-import 'package:chat/widgets/lawyer_card.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chat/models/lawyer.dart';
-import 'package:get/get.dart';
+
+import '../widgets/LawyerCardBrowse.dart';
 
 class BrowseLawyersScreen extends StatefulWidget {
   final String? search;
@@ -81,7 +81,7 @@ class _BrowseLawyersScreenState extends State<BrowseLawyersScreen> {
                 hintText: "Search for a lawyer...",
                 prefixIcon: Icon(Icons.search, color: Color(0xFF3A3A3A)),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 contentPadding: EdgeInsets.symmetric(vertical: 15),
@@ -120,12 +120,13 @@ class _BrowseLawyersScreenState extends State<BrowseLawyersScreen> {
                       name: lawyerData['name'] ?? 'Unknown',
                       email: lawyerData['email'] ?? 'Unknown',
                       specialization: lawyerData['specialization'] ?? 'Unknown',
-                      rating: lawyerData['rating'] ?? 0,
+                      rating: lawyerData['rating'] ?? 0.0,
                       province: lawyerData['province'] ?? 'Unknown',
                       number: lawyerData['number'] ?? 'N/A',
+                      desc: lawyerData['desc'] ?? '',
                     );
 
-                    return LawyerCard(lawyer: lawyer);
+                    return LawyerCardBrowse(lawyer: lawyer);
                   },
                 );
               },

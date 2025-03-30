@@ -144,9 +144,7 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => ChatScreen(
-                                          receiverEmail:
-                                              userSnapshot.data!['email'] ??
-                                                  'unknown@email.com',
+                                          //   receiverEmail: userSnapshot.data!['email'] ?? 'unknown@email.com',
                                           receiverID: request['userId'],
                                         ),
                                       ),
@@ -155,7 +153,7 @@ class _LawyerHomeScreenState extends State<LawyerHomeScreen> {
                                   child: LawsuitCard(
                                     status: request['status'],
                                     title: request['title'],
-                                    rid: request['id'],
+                                    rid: request['rid'],
                                   ),
                                 );
                               });

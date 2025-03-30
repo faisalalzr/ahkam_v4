@@ -24,7 +24,6 @@ class _LawsuitCardState extends State<LawsuitCard> {
   FirebaseFirestore fyre = FirebaseFirestore.instance;
   String? requestId;
   String? status; // Local status state
-  bool isLoading = true;
 
   @override
   void initState() {
@@ -36,48 +35,57 @@ class _LawsuitCardState extends State<LawsuitCard> {
   /// Fetch the Firestore document ID for this request
   Future<void> fetchRequestId() async {
     try {
+      print("Fetching requestId for rid: ${widget.rid}");
+
       var querySnapshot = await fyre
           .collection('requests')
           .where('rid', isEqualTo: widget.rid)
           .limit(1)
           .get();
 
+      print("Query Result: ${querySnapshot.docs.length} documents found.");
+
       if (querySnapshot.docs.isNotEmpty) {
-        setState(() {
-          requestId = querySnapshot.docs.first.id;
-        });
+        requestId = querySnapshot.docs.first.id;
+        print("Fetched requestId: $requestId");
+
+        setState(() {}); // Update UI
+      } else {
+        print("No matching document found for rid: ${widget.rid}");
       }
     } catch (e) {
       print("Error fetching request: $e");
     }
   }
 
-  /// Accepts the request and updates UI instantly
-  Future<void> acceptRequest() async {
-    if (requestId == null) return;
+  /// Update request status in Firestore
+  Future<void> updateRequestStatus(String newStatus) async {
+    if (requestId == null) {
+      print("Error: requestId is null. Cannot update status.");
+      return;
+    }
 
-    await fyre
-        .collection('requests')
-        .doc(requestId)
-        .update({'status': 'Accepted'});
+    try {
+      print("Updating request ($requestId) status to: $newStatus");
 
-    setState(() {
-      status = 'Accepted'; // Instantly update local UI
-    });
-  }
+      await fyre
+          .collection('requests')
+          .doc(requestId)
+          .update({'status': newStatus});
 
-  /// Rejects the request and updates UI instantly
-  Future<void> rejectRequest() async {
-    if (requestId == null) return;
+      print("Firestore update successful.");
 
-    await fyre
-        .collection('requests')
-        .doc(requestId)
-        .update({'status': 'Rejected'});
-
-    setState(() {
-      status = 'Rejected'; // Instantly update local UI
-    });
+      if (mounted) {
+        setState(() {
+          status = newStatus;
+        });
+      }
+    } catch (e) {
+      print("Error updating Firestore: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update status: $e")),
+      );
+    }
   }
 
   @override
@@ -90,37 +98,45 @@ class _LawsuitCardState extends State<LawsuitCard> {
 
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        contentPadding: EdgeInsets.all(12),
-        title:
-            Text(widget.title, style: TextStyle(fontWeight: FontWeight.bold)),
+        contentPadding: const EdgeInsets.all(12),
+        title: Text(widget.title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text("Status: $status", style: TextStyle(color: statusColor)),
         trailing: status == 'Accepted'
-            ? Icon(Icons.arrow_forward_ios,
-                size: 18, color: const Color.fromARGB(255, 51, 0, 255))
+            ? const Icon(Icons.arrow_forward_ios,
+                size: 18, color: Color.fromARGB(255, 51, 0, 255))
             : status == 'Rejected'
                 ? IconButton(
                     onPressed: () async {
-                      await fyre.collection('requests').doc(requestId).delete();
+                      if (requestId != null) {
+                        await fyre
+                            .collection('requests')
+                            .doc(requestId)
+                            .delete();
+                        print("Deleted request: $requestId");
+                      } else {
+                        print("Error: requestId is null, cannot delete.");
+                      }
                     },
-                    icon: Icon(Icons.block, size: 18, color: Colors.red))
+                    icon: const Icon(Icons.block, size: 18, color: Colors.red))
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        onPressed: acceptRequest,
-                        icon: Icon(Icons.check, color: Colors.green),
+                        onPressed: () => updateRequestStatus('Accepted'),
+                        icon: const Icon(Icons.check, color: Colors.green),
                       ),
                       IconButton(
-                        onPressed: rejectRequest,
-                        icon: Icon(Icons.close, color: Colors.red),
+                        onPressed: () => updateRequestStatus('Rejected'),
+                        icon: const Icon(Icons.close, color: Colors.red),
                       ),
                     ],
                   ),
         onTap: () {
-          Get.to(Lawsuit(), transition: Transition.noTransition);
+          Get.to(() => const Lawsuit(), transition: Transition.noTransition);
         },
       ),
     );

@@ -65,36 +65,34 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
 
   Future<void> _sendRequest() async {
     if (_selectedDate == null || _selectedTime == null) {
-      // Show an error if date or time is not selected
       Get.snackbar('Error', 'Please select both a date and time.');
       return;
     }
 
-    // Get the current user (assuming the user is logged in)
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       Get.snackbar('Error', 'You must be logged in to send a request.');
       return;
     }
 
-    // Create a request object
     final request = {
       'rid': '${currentUser.uid}${widget.lawyer!.uid}',
       'userId': currentUser.uid,
       'lawyerId': widget.lawyer!.uid,
+      'lawyerName': widget.lawyer!.name, // userData['name'],
       'title': _titleCont.text,
       'desc': _descriptionCont.text,
       'date': _selectedDate!.toIso8601String(),
       'time': _selectedTime!.format(context),
       'status': 'Pending',
       'timestamp': FieldValue.serverTimestamp(),
+      //  'fees': widget.lawyer!.fees
     };
 
-    // Save the request to Firestore
     try {
       await fyre.collection('requests').add(request);
       Get.snackbar('Success', 'Consultation request sent successfully.');
-      Get.back(); // Close the dialog
+      Get.back();
     } catch (e) {
       Get.snackbar('Error', 'Failed to send request: $e');
     }
@@ -114,23 +112,22 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
             return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData) {
-            return Center(
-              child: Text('no data'),
-            );
+            return Center(child: Text('No data available'));
           }
+
           var userData = snapshot.data!.data() ?? {};
+          String fees = userData['fees'] ?? 0.0;
+
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Lawyer Image
                   Center(
                     child: ClipOval(
                       child: Image.asset(
-                        widget.lawyer?.pic ??
-                            'assets/images/brad.webp', // Add your image here
+                        widget.lawyer?.pic ?? 'assets/images/brad.webp',
                         width: 150,
                         height: 150,
                         fit: BoxFit.cover,
@@ -138,8 +135,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-
-                  // Lawyer Name
                   Text(
                     userData['name'],
                     style: TextStyle(
@@ -148,7 +143,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 8),
-
                   Text(
                     'Specialization: ${userData['specialization']}',
                     style: TextStyle(
@@ -157,7 +151,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-
                   Text(
                     userData['desc'] ?? 'No description available',
                     style: TextStyle(
@@ -166,7 +159,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-
                   Text(
                     'Contact Info:',
                     style: TextStyle(
@@ -179,6 +171,17 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Displaying the consultation fee
+                  Text(
+                    'Consultation Fee: \$$fees',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
                   ),
                   SizedBox(height: 24),
@@ -202,7 +205,7 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                                   TextField(
                                     controller: _titleCont,
                                     decoration: InputDecoration(
-                                      labelText: ' title',
+                                      labelText: 'Title',
                                       suffixIcon: Icon(Icons.abc),
                                     ),
                                   ),
@@ -210,13 +213,13 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
 
                                   // description
                                   TextFormField(
-                                    maxLines: null, // Allows multiline input
+                                    maxLines: null,
                                     keyboardType: TextInputType.multiline,
                                     decoration: InputDecoration(
                                       labelText: 'Description',
                                       suffixIcon: Icon(Icons.abc),
                                       hintText:
-                                          "include all details of you case here",
+                                          "Include all details of your case here",
                                       hintStyle: TextStyle(
                                           color: const Color.fromARGB(
                                               107, 63, 63, 63)),
@@ -231,9 +234,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                                     controller: _dateController,
                                     decoration: InputDecoration(
                                       labelText: 'Select Date',
-                                      labelStyle: TextStyle(
-                                          color: const Color.fromARGB(
-                                              255, 105, 105, 105)),
                                       suffixIcon: Icon(Icons.calendar_today),
                                     ),
                                     readOnly: true,
@@ -257,59 +257,15 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                                   Center(
                                     child: ElevatedButton(
                                       onPressed: () {
-                                        // Ensure both date and time are selected
                                         if (_selectedDate != null &&
                                             _selectedTime != null) {
                                           _sendRequest();
-                                          navigator?.pop(context);
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text(
-                                                    'Consultation Request'),
-                                                content: Text(
-                                                  'You have requested a consultation on ${_selectedDate!.toLocal()} at ${_selectedTime!.format(context)}.',
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: Text('OK'),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
+                                          Get.back();
                                         } else {
-                                          // Show an error dialog if date or time is not selected
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text('Error'),
-                                                content: Text(
-                                                    'Please select both a date and time.'),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child: Text('OK'),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
+                                          Get.snackbar('Error',
+                                              'Please select both a date and time.');
                                         }
                                       },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 30, vertical: 15),
-                                      ),
                                       child: Text(
                                         'Submit',
                                         style: TextStyle(
@@ -323,10 +279,6 @@ class _LawyerDetailsScreenState extends State<LawyerDetailsScreen> {
                           },
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ),
                       child: Text(
                         'Request Consultation',
                         style: TextStyle(fontSize: 18, color: Colors.black),

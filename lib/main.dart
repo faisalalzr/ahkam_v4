@@ -8,7 +8,6 @@ import 'package:get/get.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // // ✅ Initialize Firebase First
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.windows,
   );
