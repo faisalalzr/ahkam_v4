@@ -18,18 +18,17 @@ class New extends StatefulWidget {
 }
 
 class _NewState extends State<New> {
-  bool isChecked = false;
   bool isLawyer = false;
   File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneNumberController = TextEditingController();
-  final TextEditingController _licenseNoController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _licenseController = TextEditingController();
   final TextEditingController _experienceController = TextEditingController();
-  final TextEditingController provinceCont = TextEditingController();
-  final TextEditingController descController = TextEditingController();
-  final TextEditingController feesController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+  final TextEditingController _feesController = TextEditingController();
 
   final List<String> professions = [
     "Civil Law",
@@ -37,179 +36,252 @@ class _NewState extends State<New> {
     "Corporate Law"
   ];
   String? _selectedProfession;
+
+  final List<String> provinces = [
+    "Amman (capital)",
+    "Zarqaa",
+    "ma'an",
+    "Irbid",
+    "Aqaba"
+  ];
+  String? _selectedprovinces;
   bool isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
-        title: Text('Complete Sign-Up',
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: isSubmitting
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildUserSelection(),
-                    const SizedBox(height: 20),
-                    Center(child: _buildProfileImage()),
-                    const SizedBox(height: 20),
-                    _buildUserFields(),
-                    const SizedBox(height: 20),
-                    _buildSubmitButton(),
-                  ],
-                ),
-              ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        child: Form(
+          key: _formKey,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                )
+              ],
             ),
+            child: Column(
+              children: [
+                const Text(
+                  'Complete Sign-Up',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 0, 0, 0),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildUserTypeToggle(),
+                const SizedBox(height: 20),
+                _buildProfileImagePicker(),
+                const SizedBox(height: 20),
+                _buildTextField("Full Name", _nameController),
+                const SizedBox(height: 15),
+                _buildTextField("Phone Number", _phoneController,
+                    keyboardType: TextInputType.phone),
+                if (isLawyer) ...[
+                  const SizedBox(height: 15),
+                  _buildDropdownField("Profession", _selectedProfession),
+                  const SizedBox(height: 15),
+                  _buildDropdownFieldprov("Province", _selectedprovinces),
+                  const SizedBox(height: 15),
+                  _buildTextField("Years of Experience", _experienceController,
+                      keyboardType: TextInputType.number),
+                  const SizedBox(height: 15),
+                  _buildTextField("License Number", _licenseController),
+                  const SizedBox(height: 15),
+                  _buildTextField("Description", _descController),
+                  const SizedBox(height: 15),
+                  _buildTextField("Consultation Fee", _feesController,
+                      keyboardType: TextInputType.number),
+                ],
+                const SizedBox(height: 25),
+                isSubmitting
+                    ? CircularProgressIndicator()
+                    : _buildSubmitButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildUserSelection() {
+  Widget _buildUserTypeToggle() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildSelectionButton("I'm a Client", Icons.person, false),
-        _buildSelectionButton("I'm a Lawyer", Icons.gavel, true),
+        _buildUserTypeCard("I'm a Client", Icons.person, false),
+        const SizedBox(width: 16),
+        _buildUserTypeCard("I'm a Lawyer", Icons.gavel, true),
       ],
     );
   }
 
-  Widget _buildSelectionButton(String text, IconData icon, bool selected) {
-    bool isSelected = (isLawyer == selected);
+  Widget _buildUserTypeCard(String label, IconData icon, bool value) {
+    bool selected = isLawyer == value;
     return GestureDetector(
-      onTap: () => setState(() => isLawyer = selected),
+      onTap: () => setState(() => isLawyer = value),
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
-        height: 120,
         width: 120,
+        height: 120,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.deepPurpleAccent : Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          color:
+              selected ? const Color.fromARGB(255, 112, 67, 0) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            if (isSelected)
-              BoxShadow(color: Colors.deepPurpleAccent, blurRadius: 8),
+            if (selected)
+              BoxShadow(
+                color: const Color.fromARGB(255, 112, 84, 0).withOpacity(0.5),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              )
           ],
+          border: Border.all(
+            color: selected
+                ? const Color.fromARGB(255, 100, 65, 0)
+                : Colors.grey.shade300,
+            width: 2,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 50, color: isSelected ? Colors.white : Colors.black),
+                size: 36, color: selected ? Colors.white : Colors.black87),
             const SizedBox(height: 10),
-            Text(text,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : Colors.black)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileImage() {
+  Widget _buildProfileImagePicker() {
     return GestureDetector(
       onTap: pickImage,
       child: CircleAvatar(
-        radius: 55,
-        backgroundColor: Colors.deepPurpleAccent,
+        radius: 50,
+        backgroundColor: const Color.fromARGB(255, 116, 70, 0).withOpacity(0.2),
         backgroundImage:
             _selectedImage != null ? FileImage(_selectedImage!) : null,
         child: _selectedImage == null
-            ? Icon(Icons.camera_alt, color: Colors.white, size: 30)
+            ? Icon(Icons.camera_alt,
+                color: const Color.fromARGB(255, 130, 69, 0), size: 30)
             : null,
       ),
     );
   }
 
-  Widget _buildUserFields() {
-    return Column(
-      children: [
-        _buildInputField("Full Name", _nameController,
-            validator: (val) => val!.isEmpty ? 'Please enter your name' : null),
-        const SizedBox(height: 15),
-        _buildInputField("Phone Number", _phoneNumberController,
-            keyboardType: TextInputType.phone, validator: (val) {
-          if (val!.isEmpty) return 'Please enter a phone number';
-          return null;
-        }),
-        if (isLawyer) ...[
-          const SizedBox(height: 15),
-          _buildDropdownField("Profession", _selectedProfession, professions,
-              (val) => setState(() => _selectedProfession = val)),
-          const SizedBox(height: 15),
-          _buildInputField("Years of Experience", _experienceController,
-              keyboardType: TextInputType.number, validator: (val) {
-            if (val!.isEmpty) return 'Please enter years of experience';
-            return null;
-          }),
-          const SizedBox(height: 15),
-          _buildInputField("License Number", _licenseNoController,
-              validator: (val) {
-            if (val!.isEmpty) return 'Please enter your license number';
-            return null;
-          }),
-          const SizedBox(height: 15),
-          _buildInputField("Description", descController, validator: (val) {
-            if (val!.isEmpty) return 'Please provide a description';
-            return null;
-          }),
-          const SizedBox(height: 15),
-          _buildInputField("Consultation Fee", feesController,
-              keyboardType: TextInputType.number, validator: (val) {
-            if (val!.isEmpty) return 'Please enter your consultation fee';
-            return null;
-          }),
-          const SizedBox(height: 15),
-        ],
-      ],
+  Widget _buildTextField(String label, TextEditingController controller,
+      {TextInputType? keyboardType}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      validator: (val) =>
+          val == null || val.isEmpty ? 'Please enter $label' : null,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(
+              color: const Color.fromARGB(255, 112, 73, 0), width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(String label, String? value) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      onChanged: (val) => setState(() => _selectedProfession = val),
+      items: professions
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: Colors.deepPurpleAccent, width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownFieldprov(String label, String? value) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      onChanged: (val) => setState(() => _selectedprovinces = val),
+      items: provinces
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: Colors.deepPurpleAccent, width: 2),
+        ),
+      ),
     );
   }
 
   Widget _buildSubmitButton() {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.deepPurpleAccent,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: const Color.fromARGB(255, 121, 83, 0),
       ),
       onPressed: _submitForm,
-      child: const Center(
-        child:
-            Text('Submit', style: TextStyle(fontSize: 18, color: Colors.white)),
-      ),
+      child: const Text("Submit",
+          style: TextStyle(fontSize: 18, color: Colors.white)),
     );
   }
 
   Future<void> pickImage() async {
-    final XFile? image =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (image != null) setState(() => _selectedImage = File(image.path));
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() => _selectedImage = File(image.path));
+    }
   }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isSubmitting = true);
 
-    String imageUrl = "";
+    String imageUrl = '';
     if (_selectedImage != null) {
       try {
         imageUrl = await uploadProfilePic(_selectedImage!);
-      } catch (e) {
+      } catch (_) {
         setState(() => isSubmitting = false);
-        showError('Failed to upload image. Please try again.');
+        _showError("Failed to upload image");
         return;
       }
     }
@@ -217,11 +289,12 @@ class _NewState extends State<New> {
     try {
       if (!isLawyer) {
         Account user = Account(
-            uid: widget.uid,
-            isLawyer: false,
-            name: _nameController.text,
-            email: widget.email,
-            number: _phoneNumberController.text);
+          uid: widget.uid,
+          name: _nameController.text,
+          email: widget.email,
+          number: _phoneController.text,
+          isLawyer: false,
+        );
         await user.addToFirestore();
         Get.to(HomeScreen(account: user));
       } else {
@@ -229,66 +302,34 @@ class _NewState extends State<New> {
           uid: widget.uid,
           name: _nameController.text,
           email: widget.email,
-          number: _phoneNumberController.text,
-          licenseNO: _licenseNoController.text,
+          number: _phoneController.text,
+          licenseNO: _licenseController.text,
           exp: int.parse(_experienceController.text),
           specialization: _selectedProfession,
-          isLawyer: isLawyer,
-          desc: descController.text,
-          fees: feesController.text,
+          province: _selectedprovinces,
+          isLawyer: true,
+          desc: _descController.text,
+          fees: _feesController.text,
         );
         await lawyer.addToFirestore();
         Get.to(LawyerHomeScreen(lawyer: lawyer));
       }
     } catch (e) {
+      _showError("Something went wrong");
+    } finally {
       setState(() => isSubmitting = false);
-      showError('Failed to submit. Please try again.');
     }
   }
 
   Future<String> uploadProfilePic(File image) async {
     String fileName =
-        "profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg";
+        'profile_pics/${DateTime.now().millisecondsSinceEpoch}.jpg';
     Reference ref = FirebaseStorage.instance.ref().child(fileName);
     TaskSnapshot snapshot = await ref.putFile(image);
     return await snapshot.ref.getDownloadURL();
   }
 
-  Widget _buildInputField(String label, TextEditingController controller,
-      {TextInputType? keyboardType, String? Function(String?)? validator}) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        fillColor: Colors.white,
-        filled: true,
-      ),
-    );
-  }
-
-  Widget _buildDropdownField(String label, String? value, List<String> items,
-      void Function(String?)? onChanged) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      onChanged: onChanged,
-      items: items
-          .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
-          .toList(),
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        fillColor: Colors.white,
-        filled: true,
-      ),
-    );
-  }
-
-  void showError(String message) {
+  void _showError(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
   }

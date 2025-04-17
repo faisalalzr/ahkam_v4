@@ -1,17 +1,21 @@
 import 'package:chat/models/lawyer.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerHomeScreen.dart';
-import 'package:chat/screens/Lawyer%20screens/lawyerNotiScreen.dart';
+import 'package:chat/screens/Lawyer%20screens/morelawyer.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerWalletScreen.dart';
 import 'package:chat/screens/Lawyer%20screens/lawyerchat.dart';
 
 import 'package:chat/services/auth_service.dart';
 import 'package:chat/services/chat_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../widgets/lawsuitcard.dart';
+import 'lawSuitDetails.dart';
 
 class Lawyermessages extends StatefulWidget {
   const Lawyermessages({super.key, required this.lawyer});
@@ -24,6 +28,7 @@ class Lawyermessages extends StatefulWidget {
 class _LawyermessagesScreenState extends State<Lawyermessages> {
   final ChatService chatService = ChatService();
   final AuthService authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   int selectedIndex = 2; // Persistent state for bottom nav selection
 
   // Handles bottom navigation
@@ -33,7 +38,7 @@ class _LawyermessagesScreenState extends State<Lawyermessages> {
 
     switch (index) {
       case 0:
-        Get.off(() => Lawyernotiscreen(lawyer: widget.lawyer),
+        Get.off(() => Morelawyer(lawyer: widget.lawyer),
             transition: Transition.noTransition);
         break;
       case 1:
@@ -56,21 +61,21 @@ class _LawyermessagesScreenState extends State<Lawyermessages> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
         ),
-        toolbarHeight: 80,
+        toolbarHeight: 40,
         title: Text("Messages",
             style: GoogleFonts.lato(
               textStyle: const TextStyle(
-                fontSize: 30,
+                fontSize: 20,
                 color: Color.fromARGB(255, 0, 0, 0),
-                fontWeight: FontWeight.bold,
               ),
             )),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Color(0xFFF5EEDC), // Purple color
+        backgroundColor: Color.fromARGB(255, 255, 255, 255), // Purple color
         actions: [
           IconButton(
             icon: Icon(Icons.search, color: const Color.fromARGB(255, 0, 0, 0)),
@@ -86,6 +91,8 @@ class _LawyermessagesScreenState extends State<Lawyermessages> {
   // Bottom Navigation Bar styling
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
       currentIndex: selectedIndex,
       onTap: onItemTapped,
       backgroundColor: Color.fromARGB(255, 255, 255, 255),
@@ -113,87 +120,105 @@ class _LawyermessagesScreenState extends State<Lawyermessages> {
     );
   }
 
-  // User list stream
-  Widget _buildUserList() {
-    return StreamBuilder(
-      stream: chatService.getUserStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(
-              child: Text('Error loading users',
-                  style: TextStyle(color: Colors.red, fontSize: 18)));
-        }
+  Future<List<Map<String, dynamic>>> fetchACCRequests() async {
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('requests')
+        .where('lawyerId', isEqualTo: widget.lawyer.uid)
+        .where('status', isEqualTo: "Accepted")
+        .get();
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyState(); // Custom empty state widget
-        }
-
-        return ListView(
-          children: snapshot.data!
-                  .map<Widget>(
-                      (userData) => _buildUserListItem(userData, context))
-                  .toList() ??
-              [],
-        );
-      },
-    );
+    return querySnapshot.docs
+        .map((doc) => {
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            })
+        .toList();
   }
 
-  // Empty state widget when no users are available
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.chat_bubble_outline, size: 50, color: Colors.grey),
-          SizedBox(height: 20),
-          Text("No messages available",
-              style: TextStyle(fontSize: 20, color: Colors.grey)),
-        ],
+  // User list stream
+  Widget _buildUserList() {
+    return Expanded(
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchACCRequests(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Text('');
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error fetching requests'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No requests yet.'));
+          }
+
+          List<Map<String, dynamic>> requests = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: requests.length,
+            itemBuilder: (context, index) {
+              final request = requests[index];
+
+              return FutureBuilder<DocumentSnapshot>(
+                  future: _firestore
+                      .collection('account')
+                      .doc(request['userId'])
+                      .get(),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return ListTile();
+                    } else if (userSnapshot.hasError ||
+                        !userSnapshot.hasData ||
+                        !userSnapshot.data!.exists) {
+                      return ListTile();
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      child: Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 20),
+                          title: Text(request["username"] ?? 'Unknown User',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text("Tap to chat",
+                              style: TextStyle(color: Colors.grey[600])),
+                          leading: CircleAvatar(
+                            backgroundColor: Color.fromARGB(255, 136, 97, 0),
+                            child: request["pic"] ??
+                                Text(
+                                  request["username"]
+                                          ?.substring(0, 1)
+                                          .toUpperCase() ??
+                                      'U',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                          ),
+                          onTap: () {
+                            Get.to(
+                                transition: Transition.rightToLeft,
+                                () => Lawyerchat(
+                                      receivername: request['username'] ?? '',
+                                      senderId: request["lawyerId"] ?? '',
+                                      receiverID: request["userId"] ?? '',
+                                      rid: request['rid'] ?? '',
+                                    ));
+                          },
+                        ),
+                      ),
+                    );
+                  });
+            },
+          );
+        },
       ),
     );
   }
 
   // User list item widget
-  Widget _buildUserListItem(
-      Map<String, dynamic> userData, BuildContext context) {
-    if (userData["email"] != authService.getCurrentUser()!.email) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Card(
-          elevation: 5,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-            title: Text(userData["email"] ?? 'Unknown User',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle:
-                Text("Tap to chat", style: TextStyle(color: Colors.grey[600])),
-            leading: CircleAvatar(
-              backgroundColor: Color.fromARGB(255, 136, 97, 0),
-              child: Text(
-                userData["email"]?.substring(0, 1).toUpperCase() ?? 'U',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-            // trailing: Icon(
-            //   Icons.chat_bubble,
-            //   color: Color(0xFFF5EEDC),
-            // ),
-            onTap: () {
-              Get.to(() => Lawyerchat(
-                    receiverEmail: userData["email"] ?? 'email',
-                    receiverID: userData["uid"] ?? 'uid',
-                  ));
-            },
-          ),
-        ),
-      );
-    } else {
-      return Container();
-    }
-  }
 }

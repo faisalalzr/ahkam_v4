@@ -24,37 +24,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
   final ChatService chatService = ChatService();
   late AuthService authService;
   User? currentUser;
-  List<String> chatRooms = [];
+
   int selectedIndex = 1; // Persistent state for bottom nav selection
   @override
   void initState() {
     super.initState();
     authService = AuthService();
     currentUser = authService.getCurrentUser();
-
-    if (currentUser != null) {
-      // Wrap the Firestore call in Future.delayed
-      Future.delayed(Duration.zero, () => fetchChatRoomIds());
-    } else {
-      print("No logged-in user.");
-    }
-  }
-
-  void fetchChatRoomIds() async {
-    try {
-      QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('chat_rooms').get();
-
-      List<String> roomIds = snapshot.docs.map((doc) => doc.id).toList();
-
-      setState(() {
-        chatRooms = roomIds; // Updating state with only IDs
-      });
-
-      debugPrint("Chat Room IDs: $roomIds"); // Print the IDs for debugging
-    } catch (e) {
-      debugPrint("Error fetching chat room IDs: $e");
-    }
   }
 
   // Handles bottom navigation
@@ -86,33 +62,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
         ),
-        toolbarHeight: 80,
+        toolbarHeight: 40,
         title: Text("Messages",
             style: GoogleFonts.lato(
               textStyle: const TextStyle(
-                fontSize: 30,
+                fontSize: 20,
                 color: Color.fromARGB(255, 0, 0, 0),
-                fontWeight: FontWeight.bold,
               ),
             )),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Color(0xFFF5EEDC),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255), // Purple color
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search, color: const Color.fromARGB(255, 0, 0, 0)),
+            onPressed: () {}, // Implement search functionality here
+          ),
+        ],
       ),
       body: _buildUserList(),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  // Bottom Navigation Bar
+  // Bottom Navigation Bar styling
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
       currentIndex: selectedIndex,
       onTap: onItemTapped,
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
       unselectedItemColor: Colors.grey,
       type: BottomNavigationBarType.fixed,
@@ -123,12 +107,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.messageCircle),
-          label: "Chat",
+          label: "Wallet",
         ),
         BottomNavigationBarItem(
-          icon: Icon(LucideIcons.clipboardList),
-          label: "Requests",
-        ),
+            icon: Icon(LucideIcons.clipboardList), label: ""),
         BottomNavigationBarItem(
           icon: Icon(LucideIcons.home),
           label: "Home",
@@ -137,98 +119,104 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
+  Future<List<Map<String, dynamic>>> fetchACCRequests() async {
+    var _firestore = FirebaseFirestore.instance;
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('requests')
+        .where('userId', isEqualTo: widget.account.uid)
+        .where('status', isEqualTo: "Accepted")
+        .get();
+
+    return querySnapshot.docs
+        .map((doc) => {
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            })
+        .toList();
+  }
+
   // User list stream
   Widget _buildUserList() {
-    return StreamBuilder(
-      stream: chatService.getLawyerStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return const Center(
-              child: Text('Error loading users',
-                  style: TextStyle(color: Colors.red, fontSize: 18)));
-        }
+    return Expanded(
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchACCRequests(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Text('');
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error fetching requests'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No requests yet.'));
+          }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyState();
-        }
+          List<Map<String, dynamic>> requests = snapshot.data!;
 
-        return ListView(
-          children: snapshot.data!
-                  .map<Widget>(
-                      (userData) => _buildUserListItem(userData, context))
-                  .toList() ??
-              [],
-        );
-      },
-    );
-  }
+          return ListView.builder(
+            itemCount: requests.length,
+            itemBuilder: (context, index) {
+              final request = requests[index];
 
-  // Empty state widget when no users are available
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.chat_bubble_outline, size: 50, color: Colors.grey),
-          SizedBox(height: 20),
-          Text("No messages available",
-              style: TextStyle(fontSize: 20, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
+              var _firestore = FirebaseFirestore.instance;
+              return FutureBuilder<DocumentSnapshot>(
+                  future: _firestore
+                      .collection('account')
+                      .doc(request['lawyerId'])
+                      .get(),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return ListTile();
+                    } else if (userSnapshot.hasError ||
+                        !userSnapshot.hasData ||
+                        !userSnapshot.data!.exists) {
+                      return ListTile();
+                    }
 
-  bool userHasChatRoom() {
-    return chatRooms.any((roomId) {
-      List<String> participants = roomId.split("_");
-      return participants.contains(currentUser!.uid);
-    });
-  }
-
-  Widget _buildUserListItem(
-      Map<String, dynamic> userData, BuildContext context) {
-    // Get user's chat rooms
-    bool hasChat = chatRooms.any((roomId) {
-      List<String> participants = roomId.split("_");
-      return participants.contains(currentUser!.uid);
-    });
-
-    if (hasChat) {
-      return Container(
-        child: Text(
-          "No chat rooms found for user",
-          style: TextStyle(color: Colors.black),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-          title: Text(userData["name"] ?? 'Unknown User',
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle:
-              Text("Tap to chat", style: TextStyle(color: Colors.grey[600])),
-          leading: CircleAvatar(
-            backgroundColor: Color.fromARGB(255, 136, 97, 0),
-            child: userData["pic"] ??
-                Text(
-                  userData["name"]?.substring(0, 1).toUpperCase() ?? 'U',
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-          ),
-          onTap: () {
-            Get.to(() => ChatScreen(
-                  receiverID: userData["uid"] ?? '',
-                ));
-          },
-        ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 16),
+                      child: Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 20),
+                          title: Text(request["lawyerName"] ?? 'Unknown User',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text("Tap to chat",
+                              style: TextStyle(color: Colors.grey[600])),
+                          leading: CircleAvatar(
+                            backgroundColor: Color.fromARGB(255, 136, 97, 0),
+                            child: request["pic"] ??
+                                Text(
+                                  request["lawyerName"]
+                                          ?.substring(0, 1)
+                                          .toUpperCase() ??
+                                      'U',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                          ),
+                          onTap: () {
+                            Get.to(
+                                transition: Transition.rightToLeft,
+                                () => Chat(
+                                      receivername: request['lawyerName'] ?? '',
+                                      senderId: request["userId"] ?? '',
+                                      receiverID: request["lawyerId"] ?? '',
+                                      rid: request['rid'] ?? '',
+                                    ));
+                          },
+                        ),
+                      ),
+                    );
+                  });
+            },
+          );
+        },
       ),
     );
   }

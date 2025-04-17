@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:chat/models/lawyer.dart';
-
+import 'package:get/get.dart';
 import '../widgets/LawyerCardBrowse.dart';
 
 class BrowseLawyersScreen extends StatefulWidget {
@@ -42,25 +42,32 @@ class _BrowseLawyersScreenState extends State<BrowseLawyersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFF5EEDC),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
         title: Text(
           "Browse Lawyers",
           style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
             color: Color.fromARGB(255, 72, 47, 0),
           ),
         ),
         centerTitle: true,
         elevation: 1,
+        leading: IconButton(
+            onPressed: () {
+              Get.back();
+            },
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              size: 17,
+            )),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Color.fromARGB(255, 72, 47, 0)),
+            icon: Icon(Icons.filter_list_alt,
+                size: 22, color: Color.fromARGB(255, 0, 0, 0)),
             onPressed: () {
               setState(() {
                 _searchQuery = searchController.text; // Update the search query
               });
-              // Rebuild the UI with the updated search term
             },
           ),
         ],
@@ -72,19 +79,22 @@ class _BrowseLawyersScreenState extends State<BrowseLawyersScreen> {
             child: TextField(
               controller: searchController,
               onChanged: (query) {
-                // Update the local search query as user types
                 setState(() {
                   _searchQuery = query;
                 });
               },
               decoration: InputDecoration(
                 hintText: "Search for a lawyer...",
-                prefixIcon: Icon(Icons.search, color: Color(0xFF3A3A3A)),
+                prefixIcon:
+                    Icon(Icons.search, color: Color.fromARGB(255, 104, 35, 35)),
+                filled: true,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
-                contentPadding: EdgeInsets.symmetric(vertical: 15),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               ),
             ),
           ),
@@ -126,7 +136,17 @@ class _BrowseLawyersScreenState extends State<BrowseLawyersScreen> {
                       desc: lawyerData['desc'] ?? '',
                     );
 
-                    return LawyerCardBrowse(lawyer: lawyer);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Card(
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: LawyerCardBrowse(lawyer: lawyer),
+                      ),
+                    );
                   },
                 );
               },

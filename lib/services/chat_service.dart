@@ -9,8 +9,40 @@ class ChatService {
 
   /// Returns a stream of user data from Firestore.
   Stream<List<Map<String, dynamic>>> getUserStream() {
-    return _firestore.collection("account").snapshots().map((snapshot) {
+    return _firestore
+        .collection("account")
+        .where('isLawyer', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) => doc.data()).toList();
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getAcceptedRequestsForLawyer(
+      String lawyerId) {
+    return FirebaseFirestore.instance
+        .collection('requests')
+        .where('lawyerId', isEqualTo: lawyerId)
+        .where('status', isEqualTo: 'Accepted')
+        .snapshots()
+        .asyncMap((snapshot) async {
+      final List<Map<String, dynamic>> results = [];
+
+      for (var doc in snapshot.docs) {
+        final userId = doc['userId'];
+        final userSnap = await FirebaseFirestore.instance
+            .collection('account') // assuming user data is here
+            .doc(userId)
+            .get();
+        if (userSnap.exists) {
+          final userData = userSnap.data()!;
+          userData['request'] = doc.data();
+          userData['requestId'] = doc.id;
+          results.add(userData);
+        }
+      }
+
+      return results;
     });
   }
 
@@ -25,32 +57,23 @@ class ChatService {
   }
 
   /// Sends a message to the given receiver.
-  Future<void> sendMessage(String receiverId, String message) async {
+  Future<void> sendMessage(
+      String senderId, String receiverId, String message) async {
     // Validate that the message is not empty or just whitespace.
     if (message.trim().isEmpty) return;
 
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      throw Exception("No user is currently logged in.");
-    }
-    final String currentUserID = currentUser.uid;
-    final String? currentUserEmail = currentUser.email;
-    if (currentUserEmail == null) {
-      throw Exception("Current user's email is null.");
-    }
     final Timestamp timestamp = Timestamp.now();
 
     // Create a new message instance.
     Message newMessage = Message(
-      senderID: currentUserID,
-      senderEmail: currentUserEmail,
+      senderID: senderId,
       receiverID: receiverId,
       message: message,
       timestamp: timestamp,
     );
 
     // Construct chatroom id by sorting the user IDs.
-    List<String> ids = [currentUserID, receiverId];
+    List<String> ids = [senderId, receiverId];
     ids.sort();
     String chatroomId = ids.join('_');
 
@@ -88,7 +111,6 @@ class ChatService {
 
       return snapshot.docs.map((doc) => doc.id).toList();
     } catch (e) {
-      print("Error fetching chat rooms: $e");
       return [];
     }
   }

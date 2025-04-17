@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -9,6 +10,15 @@ class AboutPage extends StatelessWidget {
     double logoSize = screenWidth * 0.4;
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        leading: IconButton(
+            onPressed: () {
+              Get.back();
+            },
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              size: 17,
+            )),
         title: Text(
           "About Us",
           style: TextStyle(
@@ -17,17 +27,13 @@ class AboutPage extends StatelessWidget {
             color: Color.fromARGB(255, 72, 47, 0),
           ),
         ),
-        backgroundColor: Color(0xFFF5EEDC),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
       ),
       body: Container(
         color: Colors.white70,
-        padding: EdgeInsets.all(20),
+        padding: EdgeInsets.all(10),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
               width: logoSize,
@@ -40,7 +46,7 @@ class AboutPage extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 5),
             Text(
               "Legal Connect",
               style: TextStyle(

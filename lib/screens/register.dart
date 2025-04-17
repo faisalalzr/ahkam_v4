@@ -21,7 +21,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  final ScrollController _scrollController = ScrollController();
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -31,7 +30,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // Register the user with Firebase Authentication
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
@@ -40,7 +38,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       var uid = userCredential.user!.uid;
 
-      // Navigate to next screen after successful registration
       Get.to(New(email: _emailController.text.trim(), uid: uid));
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Registration failed!';
@@ -66,37 +63,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
-      child: Scaffold(
-        resizeToAvoidBottomInset: true, // ✅ Prevents overflow
-        backgroundColor: Colors.white,
-        appBar: _buildAppBar(),
-        body: SingleChildScrollView(
-          controller: _scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeaderText(),
-                  SizedBox(height: 30),
-                  _buildTextField(
-                      _emailController, "Email", Icons.email, false),
-                  SizedBox(height: 20),
-                  _buildTextField(
-                      _passwordController, "Password", Icons.lock, true),
-                  SizedBox(height: 20),
-                  _buildTextField(_confirmPasswordController,
-                      "Confirm Password", Icons.lock, true),
-                  SizedBox(height: 24),
-                  _buildRegisterButton(),
-                  SizedBox(height: 16),
-                  _buildSignInOption(),
-                ],
-              ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  "AHKAM",
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontFamily: 'Times New Roman',
+                    color: Color.fromARGB(255, 72, 47, 0),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                const Text(
+                  "Create a New Account",
+                  style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(235, 31, 31, 31)),
+                ),
+                const SizedBox(height: 30),
+                _buildTextField(_emailController, "Email", false),
+                const SizedBox(height: 20),
+                _buildTextField(_passwordController, "Password", true),
+                const SizedBox(height: 20),
+                _buildTextField(
+                    _confirmPasswordController, "Confirm Password", true),
+                const SizedBox(height: 30),
+                _buildRegisterButton(),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Already have an account?"),
+                    TextButton(
+                      onPressed: () => Get.off(LoginScreen(),
+                          transition: Transition.leftToRight),
+                      child: const Text("Sign in",
+                          style: TextStyle(color: Colors.blue)),
+                    ),
+                  ],
+                )
+              ],
             ),
           ),
         ),
@@ -104,81 +120,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30))),
-      toolbarHeight: 100,
-      title: Text(
-        "AHKAM",
-        style: TextStyle(
-          fontSize: 40,
-          fontFamily: 'Times New Roman',
-          color: Colors.white,
-        ),
-      ),
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Color.fromARGB(255, 72, 47, 0),
-      automaticallyImplyLeading: false,
-    );
-  }
-
-  Widget _buildHeaderText() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Create an Account!",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 10),
-        Text(
-          "Register to get started",
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label,
-      IconData icon, bool isObscure) {
+  Widget _buildTextField(
+      TextEditingController controller, String hint, bool isObscure) {
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 21, color: Color.fromARGB(255, 72, 47, 0)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        hintText: hint,
         filled: true,
         fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return "$label cannot be empty.";
+          return "$hint cannot be empty.";
         }
-        if (label == "Email" &&
+        if (hint == "Email" &&
             !RegExp(r"^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]+$")
                 .hasMatch(value)) {
           return "Enter a valid email.";
         }
-        if ((label == "Password" || label == "Confirm Password") &&
+        if ((hint == "Password" || hint == "Confirm Password") &&
             value.length < 6) {
           return "Password must be at least 6 characters.";
         }
-        if (label == "Confirm Password" && value != _passwordController.text) {
+        if (hint == "Confirm Password" && value != _passwordController.text) {
           return "Passwords do not match.";
         }
         return null;
-      },
-      onTap: () {
-        Future.delayed(Duration(milliseconds: 300), () {
-          _scrollController.animateTo(
-            _scrollController.position.pixels,
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        });
       },
     );
   }
@@ -187,33 +161,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return ElevatedButton(
       onPressed: _isLoading ? null : _register,
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: Color.fromARGB(255, 72, 47, 0),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      child: _isLoading
-          ? CircularProgressIndicator(color: Colors.white)
-          : Text(
-              "Register",
-              style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold),
-            ),
-    );
-  }
-
-  Widget _buildSignInOption() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Already have an account?"),
-        TextButton(
-          onPressed: () =>
-              Get.off(LoginScreen(), transition: Transition.leftToRight),
-          child: Text("Sign In"),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 40),
+        backgroundColor: const Color.fromARGB(255, 72, 47, 0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
-      ],
+        elevation: 2,
+      ),
+      child: const Text(
+        "Register",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }

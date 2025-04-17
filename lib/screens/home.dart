@@ -40,8 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         nextScreen = RequestsScreen(account: widget.account);
         break;
-      case 3:
-        return; // Prevent infinite navigation loop
+
       default:
         return;
     }
@@ -58,31 +57,27 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             DrawerHeader(
-              child: Image.asset(
-                height: 150,
-                width: 150,
-                "assets/images/ehkaam-seeklogo.png",
-                fit: BoxFit.contain,
+              child: Column(
+                children: [
+                  Image.asset(
+                    height: 50,
+                    width: 100,
+                    "assets/images/ehkaam-seeklogo.png",
+                    fit: BoxFit.contain,
+                  ),
+                ],
               ),
             ),
-            Text("Menu",
-                style: GoogleFonts.lato(
-                  textStyle: TextStyle(
-                    fontSize: 25,
-                    color: Color.fromARGB(255, 72, 47, 0),
-                  ),
-                )),
-            SizedBox(height: 20),
             ListTile(
               leading: Icon(
                 Icons.info_outline,
-                color: Color.fromARGB(255, 72, 47, 0),
+                color: Color.fromARGB(255, 0, 0, 0),
               ),
               title: Text("Disclaimer",
                   style: GoogleFonts.lato(
                     textStyle: TextStyle(
                       fontSize: 17,
-                      color: Color.fromARGB(255, 72, 47, 0),
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   )),
               onTap: () => Get.to(DisclaimerPage()),
@@ -90,13 +85,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Icon(
                 Icons.info,
-                color: Color.fromARGB(255, 72, 47, 0),
+                color: Color.fromARGB(255, 0, 0, 0),
               ),
               title: Text("About",
                   style: GoogleFonts.lato(
                     textStyle: TextStyle(
                       fontSize: 17,
-                      color: Color.fromARGB(255, 72, 47, 0),
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   )),
               onTap: () => Get.to(AboutPage()),
@@ -104,13 +99,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Icon(
                 Icons.person,
-                color: Color.fromARGB(255, 72, 47, 0),
+                color: Color.fromARGB(255, 0, 0, 0),
               ),
               title: Text("Profile",
                   style: GoogleFonts.lato(
                     textStyle: TextStyle(
                       fontSize: 17,
-                      color: Color.fromARGB(255, 72, 47, 0),
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   )),
               onTap: () => Get.to(ProfileScreen(account: widget.account),
@@ -119,13 +114,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ListTile(
               leading: Icon(
                 Icons.settings,
-                color: Color.fromARGB(255, 72, 47, 0),
+                color: Color.fromARGB(255, 0, 0, 0),
               ),
               title: Text("Settings",
                   style: GoogleFonts.lato(
                     textStyle: TextStyle(
                       fontSize: 17,
-                      color: Color.fromARGB(255, 72, 47, 0),
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   )),
               onTap: () {},
@@ -136,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: true,
-        backgroundColor: Color(0xFFF5EEDC),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,6 +156,16 @@ class _HomeScreenState extends State<HomeScreen> {
               Get.to(DisclaimerPage(), transition: Transition.rightToLeft);
             },
           ),
+          Stack(
+            children: [
+              Icon(Icons.notifications_none, size: 28),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: CircleAvatar(radius: 7, backgroundColor: Colors.red),
+              ),
+            ],
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -169,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 GestureDetector(
@@ -186,12 +191,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 65),
+                          vertical: 10, horizontal: 65),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Color.fromARGB(255, 255, 194, 38),
-                            Color.fromARGB(255, 220, 158, 0),
+                            Color.fromARGB(128, 255, 224, 147),
+                            Color.fromARGB(121, 255, 214, 110),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -211,14 +216,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Icon(Icons.search_rounded,
-                              color: Colors.white, size: 22),
+                              color: const Color.fromARGB(255, 0, 0, 0),
+                              size: 22),
                           const SizedBox(width: 12),
                           Text(
                             "Browse Lawyers",
                             style: GoogleFonts.lato(
                               fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                              color: const Color.fromARGB(255, 0, 0, 0),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -229,17 +234,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 )
               ],
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 17),
             Text("Categories",
                 style: GoogleFonts.lato(
                   textStyle: TextStyle(
-                    fontSize: 30,
+                    fontSize: 20,
                     color: Color.fromARGB(255, 72, 47, 0),
                   ),
                 )),
             SizedBox(height: 10),
             SizedBox(
-              height: 200,
+              height: 175,
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
@@ -255,17 +260,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            SizedBox(height: 5),
             Text("Top Lawyers",
                 style: GoogleFonts.lato(
                   textStyle: TextStyle(
-                    fontSize: 30,
+                    fontSize: 20,
                     color: Color.fromARGB(255, 72, 47, 0),
                   ),
                 )),
             SizedBox(height: 10),
             FutureBuilder<List<Lawyer>>(
-              future: Lawyer.getTopLawyers(limit: 1),
+              future: Lawyer.getTopLawyers(limit: 2),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
@@ -288,19 +292,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        elevation: 300,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Color.fromARGB(255, 72, 47, 0),
         unselectedItemColor: Colors.grey,
         items: [
+          BottomNavigationBarItem(icon: Icon(LucideIcons.bell), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.bell), label: "Notifications"),
+              icon: Icon(LucideIcons.messageCircle), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.messageCircle), label: "Chat"),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.clipboardList), label: "Requests"),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: "Home"),
+              icon: Icon(LucideIcons.clipboardList), label: ""),
+          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: ""),
         ],
       ),
     );

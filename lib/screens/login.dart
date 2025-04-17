@@ -20,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
   final RxBool _isLoading = false.obs;
 
   Future<void> _login() async {
@@ -78,27 +77,59 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // ✅ Prevents keyboard overflow
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+      backgroundColor: const Color(0xFFF8F8F8),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildHeaderText(),
-              SizedBox(height: 30),
-              _buildTextField(_emailController, "Email", Icons.email, false),
-              SizedBox(height: 16),
-              _buildTextField(
-                  _passwordController, "Password", Icons.lock, true),
-              SizedBox(height: 24),
+              const SizedBox(height: 20),
+              Text(
+                "AHKAM",
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontFamily: 'Times New Roman',
+                  color: Color.fromARGB(255, 72, 47, 0),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 40),
+              const Text(
+                "Login to your Account",
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(235, 31, 31, 31)),
+              ),
+              const SizedBox(height: 30),
+              _buildTextField(_emailController, "Email", false),
+              const SizedBox(height: 20),
+              _buildTextField(_passwordController, "Password", true),
+              const SizedBox(height: 30),
               _buildLoginButton(),
-              SizedBox(height: 16),
-              _buildRegisterOption(),
+              const SizedBox(height: 24),
+              const Text(
+                "- Or sign in with -",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              _buildSocialRow(),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account?"),
+                  TextButton(
+                    onPressed: () => Get.to(RegisterScreen(),
+                        transition: Transition.rightToLeft),
+                    child: const Text(
+                      "Sign up",
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         ),
@@ -106,100 +137,85 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30))),
-      toolbarHeight: 100,
-      title: Text(
-        "AHKAM",
-        style: TextStyle(
-          fontSize: 40,
-          fontFamily: 'Times New Roman',
-          color: Colors.white,
-        ),
-      ),
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Color.fromARGB(255, 72, 47, 0),
-      automaticallyImplyLeading: false,
-    );
-  }
-
-  Widget _buildHeaderText() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Welcome Back!",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 10),
-        Text(
-          "Login to continue",
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label,
-      IconData icon, bool isObscure) {
+  Widget _buildTextField(
+      TextEditingController controller, String hint, bool isObscure) {
     return TextField(
       controller: controller,
       obscureText: isObscure,
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 21, color: Color.fromARGB(255, 72, 47, 0)),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        hintText: hint,
         filled: true,
         fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
       ),
-      onTap: () {
-        Future.delayed(Duration(milliseconds: 300), () {
-          _scrollController.animateTo(
-            _scrollController.position.pixels,
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        });
-      },
     );
   }
 
   Widget _buildLoginButton() {
-    return Obx(() => ElevatedButton(
-          onPressed: _isLoading.value ? null : _login,
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: Color.fromARGB(255, 72, 47, 0),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          ),
-          child: _isLoading.value
-              ? CircularProgressIndicator(color: Colors.white)
-              : Text(
-                  'Login',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        ));
+    return ElevatedButton(
+      onPressed: _login,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 40),
+        backgroundColor: const Color.fromARGB(255, 72, 47, 0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 2,
+      ),
+      child: const Text(
+        "Login",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
   }
 
-  Widget _buildRegisterOption() {
+  Widget _buildSocialRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Don't have an account?"),
-        TextButton(
-          onPressed: () =>
-              Get.to(RegisterScreen(), transition: Transition.rightToLeft),
-          child: Text("Sign up"),
-        ),
+      children: const [
+        _SocialIconButton(icon: Icons.g_mobiledata),
+        SizedBox(width: 16),
+        _SocialIconButton(icon: Icons.facebook),
+        SizedBox(width: 16),
+        _SocialIconButton(icon: Icons.alternate_email),
       ],
+    );
+  }
+}
+
+class _SocialIconButton extends StatelessWidget {
+  final IconData icon;
+  const _SocialIconButton({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            )
+          ],
+        ),
+        child: Icon(icon, size: 24, color: Colors.grey[800]),
+      ),
     );
   }
 }

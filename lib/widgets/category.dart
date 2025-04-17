@@ -40,7 +40,7 @@ class CategoryCard extends StatelessWidget {
           children: [
             Icon(
               category.icon,
-              size: 32,
+              size: 25,
               color: Color.fromARGB(255, 72, 47, 0),
             ),
             SizedBox(height: 5),

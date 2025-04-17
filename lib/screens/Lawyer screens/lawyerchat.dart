@@ -6,13 +6,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 class Lawyerchat extends StatefulWidget {
-  final String receiverEmail;
   final String receiverID;
+  final String receivername;
+  final String rid;
+  final String senderId;
 
   const Lawyerchat({
     super.key,
-    required this.receiverEmail,
     required this.receiverID,
+    required this.receivername,
+    required this.rid,
+    required this.senderId,
   });
 
   @override
@@ -26,24 +30,52 @@ class _ChatScreenState extends State<Lawyerchat> {
   final ScrollController _scrollController = ScrollController();
   final RxBool _isSendingMessage = false.obs;
 
+  bool hasEnded = false;
+  bool isLawyer = true;
+  DocumentReference<Map<String, dynamic>>? requestRef;
+
   @override
   void initState() {
     super.initState();
-    // Scroll to bottom when messages are first loaded
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    _loadRequestStatus();
+  }
+
+  Future<void> _loadRequestStatus() async {
+    final userId = _authService.getCurrentUser()?.uid;
+    if (userId == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('requests')
+        .where('rid', isEqualTo: widget.rid)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      final doc = query.docs.first;
+      requestRef = doc.reference;
+
+      setState(() {
+        hasEnded = doc['ended?'] ?? false;
+        isLawyer = true;
+      });
+    }
   }
 
   Future<void> _sendMessage() async {
+    if (hasEnded) {
+      Get.snackbar("Consultation Ended", "You cannot send messages anymore.");
+      return;
+    }
+
     String message = _messageController.text.trim();
     if (message.isEmpty) return;
 
     _isSendingMessage.value = true;
     try {
-      await _chatService.sendMessage(widget.receiverID, message);
+      await _chatService.sendMessage(
+          widget.senderId, widget.receiverID, message);
       _messageController.clear();
-      _scrollToBottom(); // Scroll to bottom after sending a message
+      _scrollToBottom();
     } catch (e) {
       Get.snackbar("Error", "Failed to send message: $e");
     } finally {
@@ -65,27 +97,49 @@ class _ChatScreenState extends State<Lawyerchat> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.white,
         title: Row(
           children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.person, color: Colors.blueAccent),
+              child: Icon(Icons.person, color: Colors.black),
             ),
             SizedBox(width: 10),
             Text(
-              widget.receiverEmail,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              widget.receivername,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.black),
           onPressed: () => Get.back(),
         ),
       ),
       body: Column(
         children: [
+          if (isLawyer && !hasEnded)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  if (requestRef != null) {
+                    await requestRef!.update({'ended?': true});
+                    setState(() {
+                      hasEnded = true;
+                    });
+                    Get.snackbar(
+                        "Consultation Ended", "The chat is now closed.");
+                  }
+                },
+                icon: Icon(Icons.stop_circle),
+                label: Text("End Consultation"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
           Expanded(child: buildMessageList()),
           buildMessageInputField(),
         ],
@@ -100,7 +154,7 @@ class _ChatScreenState extends State<Lawyerchat> {
     }
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _chatService.getMessages(currentUser.uid, widget.receiverID),
+      stream: _chatService.getMessages(widget.senderId, widget.receiverID),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
@@ -112,7 +166,6 @@ class _ChatScreenState extends State<Lawyerchat> {
         List<DocumentSnapshot<Map<String, dynamic>>> messageDocs =
             snapshot.data!.docs;
 
-        // Delay scrolling after new messages are built
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
         return ListView.builder(
@@ -130,7 +183,7 @@ class _ChatScreenState extends State<Lawyerchat> {
   Widget _buildMessageItem(DocumentSnapshot<Map<String, dynamic>> doc) {
     Map<String, dynamic>? data = doc.data();
     if (data == null) return SizedBox.shrink();
-    bool isMe = data["senderID"] == _authService.getCurrentUser()?.uid;
+    bool isMe = data["senderID"] == widget.senderId;
 
     Timestamp timestamp = data["timestamp"];
     String formattedTime = formatTimestamp(timestamp);
@@ -141,7 +194,7 @@ class _ChatScreenState extends State<Lawyerchat> {
         margin: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isMe ? Colors.blueAccent : Colors.grey[300],
+          color: isMe ? Colors.black : Colors.grey[300],
           borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
@@ -170,10 +223,20 @@ class _ChatScreenState extends State<Lawyerchat> {
 
   String formatTimestamp(Timestamp timestamp) {
     DateTime dateTime = timestamp.toDate();
-    return "${dateTime.hour}:${dateTime.minute < 10 ? '0${dateTime.minute}' : dateTime.minute}";
+    return "${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}";
   }
 
   Widget buildMessageInputField() {
+    if (hasEnded) {
+      return Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          "This consultation has ended. You can no longer send messages.",
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: Row(
@@ -182,7 +245,7 @@ class _ChatScreenState extends State<Lawyerchat> {
             child: TextField(
               controller: _messageController,
               decoration: InputDecoration(
-                hintText: "Type a message...",
+                hintText: "Message...",
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -195,13 +258,26 @@ class _ChatScreenState extends State<Lawyerchat> {
             ),
           ),
           SizedBox(width: 8),
+          CircleAvatar(
+            backgroundColor: Colors.white,
+            radius: 18,
+            child: IconButton(
+              icon: Icon(Icons.document_scanner, size: 18, color: Colors.black),
+              onPressed: () {},
+            ),
+          ),
+          SizedBox(width: 4),
           Obx(() {
             return GestureDetector(
               onTap: _isSendingMessage.value ? null : _sendMessage,
               child: CircleAvatar(
-                backgroundColor: Colors.blueAccent,
-                radius: 25,
-                child: Icon(Icons.send, color: Colors.white),
+                backgroundColor: const Color.fromARGB(255, 117, 84, 0),
+                radius: 17,
+                child: Icon(
+                  Icons.send,
+                  color: Colors.white,
+                  size: 17,
+                ),
               ),
             );
           }),

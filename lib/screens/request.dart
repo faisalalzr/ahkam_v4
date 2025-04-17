@@ -93,9 +93,11 @@ class _RequestsScreenState extends State<RequestsScreen> {
     final String lawyerName = request['lawyerName'] ?? 'Unknown Lawyer';
     final String status = request['status'] ?? 'Unknown Status';
     final String formattedDate = getFormattedDate(request);
+    final String time = request['time'];
     final String receiverEmail = request['lawyerEmail'] ?? '';
     final String receiverID = request['lawyerId'] ?? '';
-    //  final String fees = request['fees'] ?? '0.0';
+
+    final String fees = request['fees'] ?? '0.0';
 
     return Card(
       elevation: 5,
@@ -109,6 +111,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
           children: [
             Text("Lawyer: $lawyerName"),
             Text("Date: $formattedDate"),
+            Text("time: $time"),
             Text(
               "Status: $status",
               style: TextStyle(
@@ -153,13 +156,14 @@ class _RequestsScreenState extends State<RequestsScreen> {
         title: Text("Requests",
             style: GoogleFonts.lato(
               textStyle: const TextStyle(
-                fontSize: 40,
-                color: Color.fromARGB(255, 72, 47, 0),
+                fontSize: 25,
+                color: Color.fromARGB(255, 0, 0, 0),
+                fontWeight: FontWeight.bold,
               ),
             )),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color(0xFFF5EEDC),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -182,18 +186,19 @@ class _RequestsScreenState extends State<RequestsScreen> {
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
+          BottomNavigationBarItem(icon: Icon(LucideIcons.bell), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.bell), label: "Notifications"),
+              icon: Icon(LucideIcons.messageCircle), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.messageCircle), label: "Chat"),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.clipboardList), label: "Requests"),
-          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: "Home"),
+              icon: Icon(LucideIcons.clipboardList), label: ""),
+          BottomNavigationBarItem(icon: Icon(LucideIcons.home), label: ""),
         ],
       ),
     );

@@ -10,72 +10,86 @@ class LawyerCardBrowse extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Get.to(LawyerDetailsScreen(lawyer: lawyer),
-            transition: Transition.fade);
-      },
-      child: Card(
-        elevation: 10,
-        child: Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8F2),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.brown.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 2,
+            offset: const Offset(0, 3),
           ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Image.asset(
-                  lawyer.pic ?? 'assets/images/brad.webp',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
+        ],
+      ),
+      child: Row(
+        children: [
+          // Lawyer Profile Pic or Placeholder
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: lawyer.pic != null
+                ? AssetImage(lawyer.pic!)
+                : const AssetImage('assets/images/brad.webp'),
+            backgroundColor: Colors.grey[300],
+          ),
+          const SizedBox(width: 16),
+
+          // Lawyer Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lawyer.name ?? 'Unknown Lawyer',
+                  style: GoogleFonts.lato(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                  ),
                 ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Text(lawyer.name!,
-                        style: GoogleFonts.lato(
-                          textStyle: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold),
-                        )),
-                    SizedBox(height: 4),
-                    lawyer.desc!.length < 25
-                        ? Text(lawyer.desc ?? '',
-                            style: GoogleFonts.lato(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                            ))
-                        : Text('${lawyer.desc!.substring(0, 25)}...' ?? '',
-                            style: GoogleFonts.lato(
-                              textStyle: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                            )),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.orange, size: 18),
-                        Text("${lawyer.rating} ",
-                            style: TextStyle(fontSize: 14, color: Colors.grey)),
-                      ],
+                    const Icon(Icons.star, color: Colors.amber, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${lawyer.rating ?? 0.0} (${(lawyer.rating ?? 0).toInt()} Reviews)",
+                      style: GoogleFonts.lato(fontSize: 14),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  lawyer.specialization ?? 'Legal Expert',
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+
+          // View Button
+          ElevatedButton(
+            onPressed: () {
+              Get.to(() => LawyerDetailsScreen(lawyer: lawyer),
+                  transition: Transition.fade);
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: const Color.fromARGB(255, 72, 45, 0),
+              backgroundColor: const Color.fromARGB(255, 255, 241, 219),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              textStyle: GoogleFonts.lato(fontSize: 12),
+            ),
+            child: Text("View", style: GoogleFonts.lato()),
+          )
+        ],
       ),
     );
   }

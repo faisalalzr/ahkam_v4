@@ -10,59 +10,86 @@ class LawyerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Get.to(LawyerDetailsScreen(lawyer: lawyer),
-            transition: Transition.fade);
-      },
-      child: Card(
-        elevation: 20,
-        child: Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Color.fromARGB(255, 95, 68, 0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8F2),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.brown.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 2,
+            offset: const Offset(0, 3),
           ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: Image.asset(
-                  lawyer.pic ?? 'assets/images/brad.webp',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
+        ],
+      ),
+      child: Row(
+        children: [
+          // Lawyer Profile Pic or Placeholder
+          CircleAvatar(
+            radius: 25,
+            backgroundImage: lawyer.pic != null
+                ? AssetImage(lawyer.pic!)
+                : const AssetImage('assets/images/brad.webp'),
+            backgroundColor: Colors.grey[300],
+          ),
+          const SizedBox(width: 16),
+
+          // Lawyer Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lawyer.name ?? 'Unknown Lawyer',
+                  style: GoogleFonts.lato(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Colors.brown[900],
+                  ),
                 ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Text(lawyer.name!,
-                        style: GoogleFonts.lato(
-                          textStyle: TextStyle(
-                              fontSize: 15,
-                              color: Color.fromARGB(255, 255, 255, 255),
-                              fontWeight: FontWeight.bold),
-                        )),
-                    SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.orange, size: 18),
-                        Text("${lawyer.rating} (${lawyer.rating} Reviews)",
-                            style: TextStyle(
-                                fontSize: 14,
-                                color:
-                                    const Color.fromARGB(255, 255, 255, 255))),
-                      ],
+                    const Icon(Icons.star, color: Colors.amber, size: 13),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${lawyer.rating ?? 0.0} (${(lawyer.rating ?? 0).toInt()} Reviews)",
+                      style: GoogleFonts.lato(fontSize: 12),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  lawyer.specialization ?? 'Legal Expert',
+                  style: GoogleFonts.lato(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+
+          // View Button
+          ElevatedButton(
+            onPressed: () {
+              Get.to(() => LawyerDetailsScreen(lawyer: lawyer),
+                  transition: Transition.fade);
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+              backgroundColor: const Color.fromARGB(255, 246, 236, 206),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              textStyle: GoogleFonts.lato(fontSize: 12),
+            ),
+            child: Text("View", style: GoogleFonts.lato()),
+          )
+        ],
       ),
     );
   }

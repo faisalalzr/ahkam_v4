@@ -53,54 +53,47 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: GoogleFonts.lato(
               textStyle: const TextStyle(
                 fontSize: 25,
-                color: Color.fromARGB(255, 72, 47, 0),
+                color: Color.fromARGB(255, 0, 0, 0),
               ),
             )),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color(0xFFF5EEDC),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         automaticallyImplyLeading: false,
       ),
       body: ListView.builder(
-        //   itemCount: notifications.length,
         itemBuilder: (context, index) {
-          //   final notification = notifications[index];
-
           return ListTile(
-            leading: CircleAvatar(
-                //        backgroundImage: NetworkImage(notification['profileImage']),
-                ),
+            leading: CircleAvatar(),
             title: RichText(
               text: TextSpan(
                 style: TextStyle(color: Colors.black),
                 children: [
                   TextSpan(
-                    //              text: notification['user'],
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  //            TextSpan(text: _getNotificationText(notification)),
                 ],
               ),
             ),
-            //      trailing: _getTrailingWidget(notification),
           );
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         selectedItemColor: const Color.fromARGB(255, 147, 96, 0),
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: [
+          BottomNavigationBarItem(icon: Icon(LucideIcons.bell), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.bell), label: "notifications"),
+              icon: Icon(LucideIcons.messageCircle), label: ""),
           BottomNavigationBarItem(
-              icon: Icon(LucideIcons.messageCircle), label: "Chat"),
-          BottomNavigationBarItem(
-              icon: Icon(LucideIcons.clipboardList), label: "Requests"),
+              icon: Icon(LucideIcons.clipboardList), label: ""),
           BottomNavigationBarItem(
             icon: Icon(LucideIcons.home),
-            label: "Home",
+            label: "",
           ),
         ],
       ),

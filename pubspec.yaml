@@ -48,6 +48,8 @@ dependencies:
   lucide_icons: ^0.257.0
   get: ^4.6.5
   google_fonts: ^6.2.1
+  intl: ^0.18.1
+  flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
   flutter_test:

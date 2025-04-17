@@ -44,7 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Get.off(HomeScreen(account: widget.account));
+            Get.back();
           },
           icon: Icon(Icons.arrow_back),
         ),
